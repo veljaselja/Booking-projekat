@@ -1,0 +1,38 @@
+<div class="login-wrapper">
+  <div class="login-card">
+
+    <div class="login-title">
+      Prijava
+    </div>
+
+    <!-- CENTRALNI DEO -->
+    <div class="login-center">
+
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Lozinka</mat-label>
+        <input matInput type="password">
+      </mat-form-field>
+
+      <button
+        mat-raised-button
+        color="primary"
+        class="login-btn">
+        Prijavi se
+      </button>
+
+    </div>
+
+    <!-- ISPOD LOGIN POLJA -->
+    <div class="create-account">
+      <button mat-button (click)="goToRegister()">
+        Kreiraj novi nalog
+      </button>
+    </div>
+
+  </div>
+</div>
