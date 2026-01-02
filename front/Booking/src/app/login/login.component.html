@@ -1,38 +1,27 @@
 <div class="login-wrapper">
   <div class="login-card">
+    <h2 class="title">Prijava</h2>
 
-    <div class="login-title">
-      Prijava
-    </div>
-
-    <!-- CENTRALNI DEO -->
-    <div class="login-center">
-
-      <mat-form-field appearance="outline">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline" class="full">
         <mat-label>Email</mat-label>
-        <input matInput>
+        <input matInput formControlName="email" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" class="full">
         <mat-label>Lozinka</mat-label>
-        <input matInput type="password">
+        <input matInput type="password" formControlName="password" />
       </mat-form-field>
 
-      <button
-        mat-raised-button
-        color="primary"
-        class="login-btn">
-        Prijavi se
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <button class="full" mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Prijavljujem...' : 'Prijavi se' }}
       </button>
+    </form>
 
-    </div>
-
-    <!-- ISPOD LOGIN POLJA -->
-    <div class="create-account">
-      <button mat-button (click)="goToRegister()">
-        Kreiraj novi nalog
-      </button>
-    </div>
-
+    <button mat-button color="accent" (click)="openRegister()">
+      Kreiraj novi nalog
+    </button>
   </div>
 </div>

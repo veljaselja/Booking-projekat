@@ -1,48 +1,28 @@
 package com.example.demo.Exception;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Greške iz service layer-a
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(ApiException.class)
-    public ResponseEntity<ErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-
-        ErrorResponse body = new ErrorResponse(
-                Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return ResponseEntity.status(status).body(body);
+    public ErrorResponse handleApi(ApiException ex) {
+        return new ErrorResponse(Instant.now().toString(), 400, ex.getMessage());
     }
 
-    // Sve ostalo (nepredviđene greške)
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleAny(Exception ex, HttpServletRequest request) {
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+    public static class ErrorResponse {
+        public String timestamp;
+        public int status;
+        public String message;
 
-        ErrorResponse body = new ErrorResponse(
-                Instant.now(),
-                status.value(),
-                status.getReasonPhrase(),
-                "Došlo je do greške na serveru.",
-                request.getRequestURI()
-        );
-
-        // (opciono) loguj ex da vidiš stack trace u konzoli
-        ex.printStackTrace();
-
-        return ResponseEntity.status(status).body(body);
+        public ErrorResponse(String timestamp, int status, String message) {
+            this.timestamp = timestamp;
+            this.status = status;
+            this.message = message;
+        }
     }
 }

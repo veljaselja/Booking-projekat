@@ -23,12 +23,14 @@ public class AdminController {
     }
 
     @PostMapping("/users/{userId}/approve")
-    public UserModel approveUser(@RequestParam String adminId, @PathVariable String userId) {
+    public UserModel approveUser(@RequestHeader("X-Admin-Id") String adminId,
+                                 @PathVariable String userId) {
         return userService.approveUser(adminId, userId);
     }
 
     @PostMapping("/users/{userId}/disable")
-    public UserModel disableUser(@RequestParam String adminId, @PathVariable String userId) {
+    public UserModel disableUser(@RequestHeader("X-Admin-Id") String adminId,
+                                 @PathVariable String userId) {
         return userService.disableUser(adminId, userId);
     }
 }

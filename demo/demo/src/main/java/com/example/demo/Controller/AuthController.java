@@ -20,9 +20,4 @@ public class AuthController {
     public LoginResponse login(@RequestBody LoginRequest req) {
         return userService.login(req);
     }
-
-    @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(req));
-    }
 }

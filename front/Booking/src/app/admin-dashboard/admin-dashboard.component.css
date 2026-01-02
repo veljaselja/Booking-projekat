@@ -1,0 +1,8 @@
+.wrap { max-width: 900px; margin: 30px auto; padding: 0 16px; }
+.card { margin: 12px 0; padding: 12px; border-radius: 14px; }
+.row { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.name { font-weight: 700; font-size: 18px; }
+.email { opacity: .85; }
+.meta { opacity: .7; font-size: 13px; margin-top: 4px; }
+.err { color: #b00020; }

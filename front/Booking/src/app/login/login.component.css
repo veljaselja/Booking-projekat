@@ -27,7 +27,7 @@
 
 /* CENTRALNI BLOK */
 .login-center {
-  flex: 1; /* ovo gura sadržaj u sredinu */
+  flex: 1; 
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -56,3 +56,5 @@ mat-form-field {
   padding: 0;
   min-width: auto;
 }
+
+.error { color: #c00; margin: 8px 0; text-align: left; }
