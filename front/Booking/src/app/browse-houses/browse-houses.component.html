@@ -1,0 +1,105 @@
+<div class="wrap">
+
+  <div class="top-bar">
+    <h2>Pretraga smeštaja</h2>
+
+    <div class="top-actions">
+
+      <!-- dugmad za hosta -->
+      <ng-container *ngIf="isHost">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="openCreateHouse()"
+        >
+          Kreiraj smeštaj
+        </button>
+
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="goToMyHouses()"
+        >
+          Moji smeštaji
+        </button>
+      </ng-container>
+
+      <!-- LOGOUT (always visible) -->
+      <button
+        mat-stroked-button
+        color="warn"
+        (click)="logout()"
+      >
+        Logout
+      </button>
+
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Grad</mat-label>
+      <input matInput [formControl]="city" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Broj gostiju</mat-label>
+      <input matInput type="number" [formControl]="guests" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Od</mat-label>
+      <input matInput [matDatepicker]="pickerFrom" [formControl]="dateFrom">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+      <mat-datepicker #pickerFrom></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Do</mat-label>
+      <input matInput [matDatepicker]="pickerTo" [formControl]="dateTo">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+      <mat-datepicker #pickerTo></mat-datepicker>
+    </mat-form-field>
+
+    <button mat-raised-button color="accent" (click)="load()">
+      Pretraži
+    </button>
+  </div>
+
+  <!-- STATUS -->
+  <p *ngIf="loading">Učitavam...</p>
+  <p class="err" *ngIf="error">{{ error }}</p>
+
+  <!-- LIST -->
+  <mat-card class="card" *ngFor="let h of houses">
+
+    <div class="title">{{ h.title }}</div>
+
+    <div class="meta">
+      {{ h.city }} · max {{ h.maxGuests }} gostiju · {{ h.pricePerNight }} / noć
+    </div>
+
+    <div class="status">Status: {{ h.status }}</div>
+
+    <!-- ACTIONS -->
+    <div class="card-actions">
+      <!-- samo GUEST (APPROVED) može da šalje rezervaciju -->
+      <button
+        mat-raised-button
+        color="primary"
+        *ngIf="isGuest"
+        (click)="openReserve(h)"
+      >
+        Rezerviši
+      </button>
+    </div>
+
+  </mat-card>
+
+  <p *ngIf="!loading && !error && houses.length === 0">
+    Nema rezultata za zadate kriterijume.
+  </p>
+
+</div>

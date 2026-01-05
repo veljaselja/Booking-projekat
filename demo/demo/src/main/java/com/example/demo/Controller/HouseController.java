@@ -1,11 +1,11 @@
 package com.example.demo.Controller;
 
 import com.example.demo.Model.HouseModel;
-import com.example.demo.Model.ReservationModel;
 import com.example.demo.Service.HouseService;
-import com.example.demo.Service.ReservationService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -14,94 +14,57 @@ import java.util.List;
 public class HouseController {
 
     private final HouseService houseService;
-    private final ReservationService reservationService;
 
-    public HouseController(HouseService houseService,
-                           ReservationService reservationService) {
+    public HouseController(HouseService houseService) {
         this.houseService = houseService;
-        this.reservationService = reservationService;
     }
 
-    /* =========================
-       VIEWER
-       ========================= */
-
-    // VIEWER: lista svih aktivnih kuća
-    @GetMapping
-    public List<HouseModel> getActiveHouses() {
-        return houseService.getActiveHouses();
-    }
-
-    // VIEWER: detalji kuće
-    @GetMapping("/{houseId}")
-    public HouseModel getHouseById(@PathVariable String houseId) {
-        return houseService.getById(houseId);
-    }
-
-    /* =========================
-       HOST / ADMIN ENDPOINTI
-       ========================= */
-
-    // HOST / ADMIN: kreiranje kuće
+    // HOST: kreira smeštaj (header X-Host-Id)
     @PostMapping
-    public HouseModel createHouse(@RequestParam String ownerId,
-                                  @RequestBody HouseModel house) {
-        return houseService.createHouse(ownerId, house);
+    public HouseModel create(@RequestHeader("X-Host-Id") String hostId,
+                             @RequestBody HouseModel house) {
+        return houseService.createHouse(hostId, house);
     }
 
-    // HOST / ADMIN: update kuće
+    // HOST: update smeštaj
     @PutMapping("/{houseId}")
-    public HouseModel updateHouse(@RequestParam String actorId,
-                                  @PathVariable String houseId,
-                                  @RequestBody HouseModel updates) {
-        return houseService.updateHouse(actorId, houseId, updates);
+    public HouseModel update(@RequestHeader("X-Host-Id") String hostId,
+                             @PathVariable String houseId,
+                             @RequestBody HouseModel patch) {
+        return houseService.updateHouse(hostId, houseId, patch);
     }
 
-    // HOST / ADMIN: deaktivacija kuće
-    @PostMapping("/{houseId}/deactivate")
-    public HouseModel deactivateHouse(@RequestParam String actorId,
-                                      @PathVariable String houseId) {
-        return houseService.deactivateHouse(actorId, houseId);
+    // HOST: delete smeštaj
+    @DeleteMapping("/{houseId}")
+    public void delete(@RequestHeader("X-Host-Id") String hostId,
+                       @PathVariable String houseId) {
+        houseService.deleteHouse(hostId, houseId);
     }
 
-    // HOST / ADMIN: aktivacija kuće
-    @PostMapping("/{houseId}/activate")
-    public HouseModel activateHouse(@RequestParam String actorId,
-                                    @PathVariable String houseId) {
-        return houseService.activateHouse(actorId, houseId);
+    // HOST: moji smeštaji
+    @GetMapping("/mine")
+    public List<HouseModel> myHouses(@RequestHeader("X-Host-Id") String hostId) {
+        return houseService.getMyHouses(hostId);
     }
 
-    // HOST: sve kuće vlasnika
-    @GetMapping("/owner/{ownerId}")
-    public List<HouseModel> getHousesByOwner(@PathVariable String ownerId) {
-        return houseService.getHousesByOwner(ownerId);
+    // VIEW/BROWSE: svi odobreni
+    @GetMapping
+    public List<HouseModel> browse(@RequestParam(required = false) String city) {
+        return houseService.browseApproved(city);
     }
 
-    /* =========================
-       REZERVACIJE ZA KUĆU
-       (HOST / ADMIN)
-       ========================= */
-
-    // HOST / ADMIN: odobri rezervaciju za ovu kuću
-    @PostMapping("/{houseId}/reservations/{reservationId}/approve")
-    public ReservationModel approveReservationForHouse(
-            @RequestParam String actorId,
-            @PathVariable String houseId,
-            @PathVariable String reservationId,
-            @RequestParam(required = false) String note
+    @GetMapping("/search")
+    public List<HouseModel> search(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Integer guests,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
-        // Provera vlasništva i prava je u ReservationService
-        return reservationService.approveReservation(actorId, reservationId, note);
+        return houseService.searchAvailable(city, guests, from, to);
     }
 
-    // HOST / ADMIN: odbij rezervaciju za ovu kuću
-    @PostMapping("/{houseId}/reservations/{reservationId}/reject")
-    public ReservationModel rejectReservationForHouse(
-            @RequestParam String actorId,
-            @PathVariable String houseId,
-            @PathVariable String reservationId,
-            @RequestParam(required = false) String note
-    ) {
-        return reservationService.rejectReservation(actorId, reservationId, note);
+    @GetMapping("/{houseId}")
+    public HouseModel getApproved(@PathVariable String houseId) {
+        return houseService.getApprovedById(houseId);
     }
 }

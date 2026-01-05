@@ -48,8 +48,12 @@ public class ReservationServiceImpl implements ReservationService {
         HouseModel house = houseRepo.findById(req.getHouseId())
                 .orElseThrow(() -> new ApiException("Objekat ne postoji."));
 
-        if (!house.isActive()) {
-            throw new ApiException("Objekat nije aktivan.");
+        // ✅ umesto isActive()
+        if (house.getStatus() != HouseModel.Status.APPROVED) {
+            throw new ApiException("Objekat nije odobren (APPROVED).");
+        }
+        if (house.getStatus() == HouseModel.Status.DISABLED) {
+            throw new ApiException("Objekat je onemogućen (DISABLED).");
         }
 
         LocalDate from = req.getDateFrom();
@@ -191,16 +195,24 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     private void ensureAdminOrOwnerHost(UserModel actor, HouseModel house) {
+        if (actor.getStatus() != UserModel.Status.APPROVED) {
+            throw new ApiException("Korisnik nije odobren.");
+        }
+
         boolean isAdmin = actor.getRole() == UserModel.Role.ADMIN;
+
+        // ✅ umesto getOwnerId() koristimo hostId
         boolean isOwnerHost = actor.getRole() == UserModel.Role.HOST
-                && house.getOwnerId() != null
-                && house.getOwnerId().equals(actor.getId());
+                && house.getHostId() != null
+                && house.getHostId().equals(actor.getId());
 
         if (!isAdmin && !isOwnerHost) {
             throw new ApiException("Nemaš pravo da odlučuješ o ovoj rezervaciji.");
         }
-        if (actor.getStatus() != UserModel.Status.APPROVED) {
-            throw new ApiException("Korisnik nije odobren.");
+
+        // opcionalno: ako je objekat disabled, niko ne bi trebalo da odobrava
+        if (house.getStatus() == HouseModel.Status.DISABLED) {
+            throw new ApiException("Objekat je onemogućen (DISABLED).");
         }
     }
 }

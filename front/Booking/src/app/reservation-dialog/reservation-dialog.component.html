@@ -1,0 +1,78 @@
+<h2 mat-dialog-title>Rezerviši smeštaj</h2>
+
+<div mat-dialog-content class="content">
+  <div class="house">
+    <div class="title">{{ data.house.title }}</div>
+    <div class="meta">
+      {{ data.house.city }} · max {{ data.house.maxGuests }} · {{ data.house.pricePerNight }} / noć
+    </div>
+  </div>
+
+  <p class="err" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="ok" *ngIf="successMessage">{{ successMessage }}</p>
+
+  <form [formGroup]="form" class="form">
+    <mat-form-field appearance="outline">
+      <mat-label>Od</mat-label>
+      <input matInput [matDatepicker]="pickerFrom" formControlName="dateFrom">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+      <mat-datepicker #pickerFrom></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Do</mat-label>
+      <input matInput [matDatepicker]="pickerTo" formControlName="dateTo">
+      <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+      <mat-datepicker #pickerTo></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Broj gostiju</mat-label>
+      <input matInput type="number" formControlName="guestsCount">
+    </mat-form-field>
+  </form>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="close()">Otkaži</button>
+  <button mat-raised-button color="primary" (click)="submit()" [disabled]="isSubmitting">
+    {{ isSubmitting ? 'Šaljem...' : 'Pošalji zahtev' }}
+  </button>
+</div>
+<style scoped>
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 300px;
+  }
+
+  .house {
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+  }
+
+  .title {
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+
+  .meta {
+    color: #666;
+    font-size: 0.9em;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .err {
+    color: red;
+  }
+
+   .ok {
+    color: green;
+  } </style>

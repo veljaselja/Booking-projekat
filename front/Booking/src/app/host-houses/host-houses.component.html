@@ -1,0 +1,64 @@
+<div class="wrap">
+  <h2>Moji smeštaji (HOST)</h2>
+
+  <p class="msg err" *ngIf="error">{{ error }}</p>
+  <p class="msg success" *ngIf="success">{{ success }}</p>
+
+  <mat-card class="card">
+    <h3>Dodaj novi smeštaj</h3>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form">
+      <mat-form-field appearance="outline">
+        <mat-label>Naziv</mat-label>
+        <input matInput formControlName="title" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Opis</mat-label>
+        <textarea matInput formControlName="description"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Grad</mat-label>
+        <input matInput formControlName="city" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Adresa</mat-label>
+        <input matInput formControlName="address" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Maks. gostiju</mat-label>
+        <input matInput type="number" formControlName="maxGuests" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Cena po noći</mat-label>
+        <input matInput type="number" formControlName="pricePerNight" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Slike (URL-ovi, odvojeni zarezom)</mat-label>
+        <input matInput formControlName="imageUrlsText" />
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+        Dodaj smeštaj
+      </button>
+    </form>
+  </mat-card>
+
+  <h3 style="margin-top: 18px;">Lista</h3>
+  <p *ngIf="loading">Učitavam...</p>
+
+  <mat-card class="card" *ngFor="let h of houses">
+    <div class="row">
+      <div>
+        <div class="title">{{ h.title }}</div>
+        <div class="meta">{{ h.city }} | maxGuests: {{ h.maxGuests }} | {{ h.pricePerNight }} / noć</div>
+        <div class="status">Status: {{ h.status }}</div>
+      </div>
+    </div>
+  </mat-card>
+</div>

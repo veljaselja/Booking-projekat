@@ -1,23 +1,27 @@
 <div class="wrap">
-  <h2>Admin — Pending korisnici</h2>
+  <div class="topbar">
+    <h2>Admin — Pending korisnici</h2>
+    <button mat-stroked-button (click)="logout()">Logout</button>
+  </div>
 
-  <p class="err" *ngIf="error">{{ error }}</p>
+  <p class="msg success" *ngIf="success">{{ success }}</p>
+  <p class="msg err" *ngIf="error">{{ error }}</p>
+
   <p *ngIf="loading">Učitavam...</p>
+  <p *ngIf="!loading && users.length === 0">Nema pending korisnika.</p>
 
   <mat-card class="card" *ngFor="let u of users">
     <div class="row">
-      <div>
+      <div class="left">
         <div class="name">{{ u.fullName }}</div>
         <div class="email">{{ u.email }}</div>
         <div class="meta">{{ u.role }} | {{ u.status }}</div>
       </div>
 
       <div class="actions">
-        <button mat-raised-button color="primary" (click)="approve(u.id)">Odobri</button>
-        <button mat-raised-button color="warn" (click)="disable(u.id)">Ukloni</button>
+        <button mat-raised-button color="primary" (click)="approve(u)">Odobri</button>
+        <button mat-raised-button color="warn" (click)="disable(u)">Ukloni</button>
       </div>
     </div>
   </mat-card>
-
-  <p *ngIf="!loading && users.length === 0">Nema pending korisnika.</p>
 </div>

@@ -1,13 +1,17 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface UserDto {
-  id: string;
+  id?: string;                  
+  _id?: string;                 
   fullName: string;
   email: string;
-  role: 'ADMIN' | 'HOST' | 'GUEST';
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED';
+  role?: 'ADMIN' | 'HOST' | 'GUEST';
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'DISABLED';
+  createdAt?: string | null;
+  approvedAt?: string | null;
+  approvedByAdminId?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -20,11 +24,13 @@ export class AdminService {
     return this.http.get<UserDto[]>(`${this.baseUrl}/users/pending`);
   }
 
-  approve(adminId: string, userId: string): Observable<UserDto> {
-    return this.http.post<UserDto>(`${this.baseUrl}/users/${userId}/approve?adminId=${encodeURIComponent(adminId)}`, {});
+  approve(adminId: string, userId: string): Observable<any> {
+    const headers = new HttpHeaders({ 'X-Admin-Id': adminId });
+    return this.http.post(`${this.baseUrl}/users/${userId}/approve`, {}, { headers });
   }
 
-  disable(adminId: string, userId: string): Observable<UserDto> {
-    return this.http.post<UserDto>(`${this.baseUrl}/users/${userId}/disable?adminId=${encodeURIComponent(adminId)}`, {});
+  disable(adminId: string, userId: string): Observable<any> {
+    const headers = new HttpHeaders({ 'X-Admin-Id': adminId });
+    return this.http.post(`${this.baseUrl}/users/${userId}/disable`, {}, { headers });
   }
 }

@@ -2,121 +2,244 @@ package com.example.demo.ServiceImpl;
 
 import com.example.demo.Exception.ApiException;
 import com.example.demo.Model.HouseModel;
+import com.example.demo.Model.ReservationModel;
 import com.example.demo.Model.UserModel;
 import com.example.demo.Repository.HouseRepository;
-import com.example.demo.Repository.UserRepository;
+import com.example.demo.Repository.ReservationRepository;
 import com.example.demo.Service.HouseService;
+import com.example.demo.Service.UserService;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class HouseServiceImpl implements HouseService {
 
     private final HouseRepository houseRepo;
-    private final UserRepository userRepo;
+    private final UserService userService;
+    private final ReservationRepository reservationRepo;
 
-    public HouseServiceImpl(HouseRepository houseRepo, UserRepository userRepo) {
+    public HouseServiceImpl(
+            HouseRepository houseRepo,
+            UserService userService,
+            ReservationRepository reservationRepo
+    ) {
         this.houseRepo = houseRepo;
-        this.userRepo = userRepo;
+        this.userService = userService;
+        this.reservationRepo = reservationRepo;
+    }
+
+    // =========================
+    // CREATE
+    // =========================
+    @Override
+    public HouseModel createHouse(String hostId, HouseModel house) {
+        UserModel host = userService.getById(hostId);
+
+        if (host.getRole() != UserModel.Role.HOST) {
+            throw new ApiException("Samo HOST može da dodaje smeštaj.");
+        }
+        if (host.getStatus() != UserModel.Status.APPROVED) {
+            throw new ApiException("HOST nije odobren.");
+        }
+
+        if (house.getTitle() == null || house.getTitle().isBlank())
+            throw new ApiException("Title je obavezan.");
+        if (house.getCity() == null || house.getCity().isBlank())
+            throw new ApiException("City je obavezan.");
+        if (house.getMaxGuests() <= 0)
+            throw new ApiException("maxGuests mora biti > 0.");
+        if (house.getPricePerNight() == null)
+            throw new ApiException("pricePerNight je obavezan.");
+
+        house.setHostId(hostId);
+        house.setStatus(HouseModel.Status.PENDING);
+        house.setCreatedAt(Instant.now());
+        house.setApprovedAt(null);
+        house.setApprovedByAdminId(null);
+
+        return houseRepo.save(house);
+    }
+
+    // =========================
+    // UPDATE
+    // =========================
+    @Override
+    public HouseModel updateHouse(String hostId, String houseId, HouseModel patch) {
+        HouseModel existing = houseRepo.findById(houseId)
+                .orElseThrow(() -> new ApiException("Smeštaj ne postoji."));
+
+        if (!existing.getHostId().equals(hostId)) {
+            throw new ApiException("Nemaš pravo da menjaš tuđi smeštaj.");
+        }
+        if (existing.getStatus() == HouseModel.Status.DISABLED) {
+            throw new ApiException("Smeštaj je disabled.");
+        }
+
+        if (patch.getTitle() != null) existing.setTitle(patch.getTitle());
+        if (patch.getDescription() != null) existing.setDescription(patch.getDescription());
+        if (patch.getCity() != null) existing.setCity(patch.getCity());
+        if (patch.getAddress() != null) existing.setAddress(patch.getAddress());
+        if (patch.getMaxGuests() > 0) existing.setMaxGuests(patch.getMaxGuests());
+        if (patch.getPricePerNight() != null) existing.setPricePerNight(patch.getPricePerNight());
+        if (patch.getImageUrls() != null) existing.setImageUrls(patch.getImageUrls());
+
+        // nakon izmene ponovo ide na PENDING
+        existing.setStatus(HouseModel.Status.PENDING);
+        existing.setApprovedAt(null);
+        existing.setApprovedByAdminId(null);
+
+        return houseRepo.save(existing);
+    }
+
+    // =========================
+    // DELETE
+    // =========================
+    @Override
+    public void deleteHouse(String hostId, String houseId) {
+        HouseModel existing = houseRepo.findById(houseId)
+                .orElseThrow(() -> new ApiException("Smeštaj ne postoji."));
+
+        if (!existing.getHostId().equals(hostId)) {
+            throw new ApiException("Nemaš pravo da brišeš tuđi smeštaj.");
+        }
+
+        houseRepo.deleteById(houseId);
+    }
+
+    // =========================
+    // HOST
+    // =========================
+    @Override
+    public List<HouseModel> getMyHouses(String hostId) {
+        return houseRepo.findByHostId(hostId);
+    }
+
+    // =========================
+    // ADMIN
+    // =========================
+    @Override
+    public List<HouseModel> getPendingHouses() {
+        return houseRepo.findByStatus(HouseModel.Status.PENDING);
     }
 
     @Override
-    public HouseModel createHouse(String ownerId, HouseModel house) {
-        UserModel owner = userRepo.findById(ownerId)
-                .orElseThrow(() -> new ApiException("Owner ne postoji."));
-
-        // HOST ili ADMIN može kreirati
-        if (owner.getRole() != UserModel.Role.HOST && owner.getRole() != UserModel.Role.ADMIN) {
-            throw new ApiException("Samo HOST (ili ADMIN) može da kreira objekat.");
+    public HouseModel approveHouse(String adminId, String houseId) {
+        UserModel admin = userService.getById(adminId);
+        if (admin.getRole() != UserModel.Role.ADMIN) {
+            throw new ApiException("Samo ADMIN može da odobri smeštaj.");
         }
 
-        // Mora biti odobren nalog
-        if (owner.getStatus() != UserModel.Status.APPROVED) {
-            throw new ApiException("Korisnik nije odobren.");
+        HouseModel house = houseRepo.findById(houseId)
+                .orElseThrow(() -> new ApiException("Smeštaj ne postoji."));
+
+        if (house.getStatus() != HouseModel.Status.PENDING) {
+            throw new ApiException("Smeštaj nije u PENDING statusu.");
         }
 
-        // Minimalne validacije
-        if (house.getTitle() == null || house.getTitle().isBlank()) throw new ApiException("Naslov je obavezan.");
-        if (house.getCity() == null || house.getCity().isBlank()) throw new ApiException("Grad je obavezan.");
-        if (house.getAddress() == null || house.getAddress().isBlank()) throw new ApiException("Adresa je obavezna.");
-        if (house.getPricePerNight() <= 0) throw new ApiException("Cena po noćenju mora biti > 0.");
-        if (house.getMaxGuests() <= 0) throw new ApiException("Max guests mora biti > 0.");
-
-        house.setOwnerId(ownerId);
-        house.setActive(true);
-        house.setCreatedAt(Instant.now());
+        house.setStatus(HouseModel.Status.APPROVED);
+        house.setApprovedAt(Instant.now());
+        house.setApprovedByAdminId(adminId);
 
         return houseRepo.save(house);
     }
 
     @Override
-    public HouseModel updateHouse(String actorId, String houseId, HouseModel updates) {
-        HouseModel existing = getById(houseId);
-        UserModel actor = userRepo.findById(actorId)
-                .orElseThrow(() -> new ApiException("Korisnik ne postoji."));
-
-        boolean isAdmin = actor.getRole() == UserModel.Role.ADMIN;
-        boolean isOwner = existing.getOwnerId() != null && existing.getOwnerId().equals(actorId);
-
-        if (!isAdmin && !isOwner) {
-            throw new ApiException("Nemaš pravo da menjaš ovaj objekat.");
+    public HouseModel rejectHouse(String adminId, String houseId) {
+        UserModel admin = userService.getById(adminId);
+        if (admin.getRole() != UserModel.Role.ADMIN) {
+            throw new ApiException("Samo ADMIN može da odbije smeštaj.");
         }
 
-        // Update samo ako je poslato (partial update)
-        if (updates.getTitle() != null) existing.setTitle(updates.getTitle());
-        if (updates.getDescription() != null) existing.setDescription(updates.getDescription());
-        if (updates.getCity() != null) existing.setCity(updates.getCity());
-        if (updates.getAddress() != null) existing.setAddress(updates.getAddress());
-        if (updates.getPricePerNight() > 0) existing.setPricePerNight(updates.getPricePerNight());
-        if (updates.getMaxGuests() > 0) existing.setMaxGuests(updates.getMaxGuests());
-        if (updates.getImageUrls() != null) existing.setImageUrls(updates.getImageUrls());
+        HouseModel house = houseRepo.findById(houseId)
+                .orElseThrow(() -> new ApiException("Smeštaj ne postoji."));
 
-        return houseRepo.save(existing);
-    }
-
-    @Override
-    public HouseModel deactivateHouse(String actorId, String houseId) {
-        HouseModel existing = getById(houseId);
-        ensureAdminOrOwner(actorId, existing);
-        existing.setActive(false);
-        return houseRepo.save(existing);
-    }
-
-    @Override
-    public HouseModel activateHouse(String actorId, String houseId) {
-        HouseModel existing = getById(houseId);
-        ensureAdminOrOwner(actorId, existing);
-        existing.setActive(true);
-        return houseRepo.save(existing);
-    }
-
-    @Override
-    public HouseModel getById(String houseId) {
-        return houseRepo.findById(houseId)
-                .orElseThrow(() -> new ApiException("Objekat ne postoji."));
-    }
-
-    @Override
-    public List<HouseModel> getActiveHouses() {
-        return houseRepo.findByIsActiveTrue();
-    }
-
-    @Override
-    public List<HouseModel> getHousesByOwner(String ownerId) {
-        return houseRepo.findByOwnerId(ownerId);
-    }
-
-    private void ensureAdminOrOwner(String actorId, HouseModel house) {
-        UserModel actor = userRepo.findById(actorId)
-                .orElseThrow(() -> new ApiException("Korisnik ne postoji."));
-
-        boolean isAdmin = actor.getRole() == UserModel.Role.ADMIN;
-        boolean isOwner = house.getOwnerId() != null && house.getOwnerId().equals(actorId);
-
-        if (!isAdmin && !isOwner) {
-            throw new ApiException("Nemaš pravo za ovu akciju.");
+        if (house.getStatus() != HouseModel.Status.PENDING) {
+            throw new ApiException("Smeštaj nije u PENDING statusu.");
         }
+
+        house.setStatus(HouseModel.Status.REJECTED);
+        house.setApprovedAt(Instant.now());
+        house.setApprovedByAdminId(adminId);
+
+        return houseRepo.save(house);
+    }
+
+    // =========================
+    // BROWSE (BASIC)
+    // =========================
+    @Override
+    public List<HouseModel> browseApproved(String city) {
+        if (city == null || city.isBlank()) {
+            return houseRepo.findByStatus(HouseModel.Status.APPROVED);
+        }
+        return houseRepo.findByStatusAndCityIgnoreCase(HouseModel.Status.APPROVED, city);
+    }
+
+    // =========================
+    // BROWSE (ADVANCED – DATES + GUESTS)
+    // =========================
+    @Override
+    public List<HouseModel> searchAvailable(String city, Integer guests, LocalDate from, LocalDate to) {
+
+        List<HouseModel> base = browseApproved(city);
+
+        if (from != null && to != null) {
+            if (!from.isBefore(to)) {
+                throw new ApiException("dateFrom mora biti pre dateTo.");
+            }
+            if (from.isBefore(LocalDate.now())) {
+                throw new ApiException("dateFrom ne može biti u prošlosti.");
+            }
+        }
+
+        List<HouseModel> result = new ArrayList<>();
+
+        for (HouseModel house : base) {
+
+            if (guests != null && guests > 0 && house.getMaxGuests() < guests) {
+                continue;
+            }
+
+            if (from != null && to != null) {
+                if (!isHouseAvailable(house.getId(), from, to)) {
+                    continue;
+                }
+            }
+
+            result.add(house);
+        }
+
+        return result;
+    }
+
+    // =========================
+    // GET BY ID
+    // =========================
+    @Override
+    public HouseModel getApprovedById(String houseId) {
+        HouseModel h = houseRepo.findById(houseId)
+                .orElseThrow(() -> new ApiException("Smeštaj ne postoji."));
+        if (h.getStatus() != HouseModel.Status.APPROVED) {
+            throw new ApiException("Smeštaj nije odobren.");
+        }
+        return h;
+    }
+
+    // =========================
+    // AVAILABILITY CHECK
+    // =========================
+    private boolean isHouseAvailable(String houseId, LocalDate from, LocalDate to) {
+        List<ReservationModel> overlaps =
+                reservationRepo.findByHouseIdAndStatusAndDateFromLessThanEqualAndDateToGreaterThanEqual(
+                        houseId,
+                        ReservationModel.Status.APPROVED,
+                        to,
+                        from
+                );
+        return overlaps == null || overlaps.isEmpty();
     }
 }

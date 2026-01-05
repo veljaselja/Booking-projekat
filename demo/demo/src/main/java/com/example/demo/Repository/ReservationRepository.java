@@ -23,3 +23,4 @@ public interface ReservationRepository extends MongoRepository<ReservationModel,
             LocalDate from
     );
 }
+
